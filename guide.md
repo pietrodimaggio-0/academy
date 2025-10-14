@@ -30,11 +30,10 @@ example output:
 Check your container
 wget -O- <http://localhost:8080>
 
-### 1.5 Give the container a name ###
-
-    docker run --name es_1_5 -d nginx
-    docker stop es_1_5
-    docker start es_1_5
+### 1.5  Inspect a running container ###
+    docker inspect -f 'Image: {{ .Config.Image }}’ es_1_4
+    docker inspect -f 'Command: {{ .Config.Cmd }}' es_1_4
+    docker inspect -f 'Entrypoint: {{ .Config.Entrypoint }}' es_1_4
 
 ### 1.6 Jumping into a running container ###
 
