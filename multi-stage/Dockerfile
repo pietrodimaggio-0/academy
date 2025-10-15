@@ -1,11 +1,11 @@
-FROM node:18.8.0-alpine3.16 as builder
+FROM node:alpine as builder
 WORKDIR /app
 COPY package*.json ./
 COPY tsconfig*.json ./
 COPY src src
 RUN  npm ci && npm run build
 
-FROM node:18.8.0-alpine3.16
+FROM node:alpine
 WORKDIR /app
 COPY package*.json ./
 RUN npm install --production

@@ -31,6 +31,7 @@ Check your container
 wget -O- <http://localhost:8080>
 
 ### 1.5  Inspect a running container ###
+
     docker inspect -f 'Image: {{ .Config.Image }}’ es_1_4
     docker inspect -f 'Command: {{ .Config.Cmd }}' es_1_4
     docker inspect -f 'Entrypoint: {{ .Config.Entrypoint }}' es_1_4
@@ -58,7 +59,7 @@ Stop and Start es_1_5
 
     docker logs es_1_5
 
-### 1.8 A Postgres container
+### 1.8 A Postgres container ###
 
 The `postgres` image on the Docker Hub starts a relational database server on TCP port 5432:
 
@@ -159,45 +160,33 @@ Modify app.py:
 
 A multi-stage build means using multiple FROM statements in a single Dockerfile.
 Each FROM starts a new build stage, and you can copy only what you need from earlier stages.
-
     ## ---------------------
     ## Stage 1: Builder
     ## ---------------------
 
-    FROM node:20 AS builder
-
+    FROM node:alpine as builder
     WORKDIR /app
-
-    ## Copy and install dependencies
-
     COPY package*.json ./
-    RUN npm install --production
-
-    ## Copy source code
-
-    COPY . .
+    COPY tsconfig*.json ./
+    COPY src src
+    RUN  npm ci && npm run build
 
     ## ---------------------
     ## Stage 2: Runtime
     ## ---------------------
-    FROM node:20-alpine AS runtime
 
+    FROM node:alpine
     WORKDIR /app
-
-    ## Copy only what’s needed from the builder stage
-    COPY --from=builder /app ./
-
-    ## Expose the application port
-    EXPOSE 3000
-
-    ## Run the app
-    CMD ["npm", "start"]
+    COPY package*.json ./
+    RUN npm install --production
+    COPY --from=builder /app/dist/ dist/
+    ENTRYPOINT ["npm", "run", "start:prod"]
 
 ⚙️ How it Works 💡
 
- 1. The first stage (builder) uses the full Node image (with npm and compilers) to install dependencies.
+ 1. The first stage (builder) compiles the node application producing deployable format into the dist folder.
 
- 2. The second stage starts from a lightweight base (node:20-alpine) and copies only the /app folder from stage 1.
+ 2. The second stage installs only the production dependencies needed at runtime.  Then it copies the /app/dist folder from the "builder" image.
 
  3. The final image is small, clean, and ready to run — no build tools included.
 
